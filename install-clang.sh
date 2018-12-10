@@ -1,18 +1,20 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
+
+set -e
 
 triple=$(gcc -v 2>&1 | grep "^Target:" | cut -d ' ' -f 2)
-addl_ldflags="-Wl,--strip-all -ldl -lz -lunwind"
+addl_ldflags="-Wl,--strip-all -ldl -lz"
 addl_cmake="-DLLVM_DEFAULT_TARGET_TRIPLE=${triple}"
 
 shopt -s nullglob
 
 perform_clone=1
-assertions=off             # If "on", enable LLVM assertions.
-parallelism=1              # The value X to pass to make -j X to build in parallel.
-targets=host               # LLVM_TARGETS_TO_BUILD ("all" builds them all).
-git_base=https://github.com/llvm-mirror
+assertions=off
+parallelism=1
+targets=host
 toolchain=none
 sysroot=none
+v=7.0.0
 
 while getopts "j:t:s:c" opt ; do
     case "$opt" in
@@ -35,17 +37,6 @@ shift $(expr $OPTIND - 1)
 prefix=`echo $1 | sed 's#/$##'`
 shift
 
-# git version to checkout.
-version_llvm=release_60
-version_clang=release_60
-version_libcxx=release_60
-version_compilerrt=release_60
-version_libcxxabi=release_60
-# version_lldb=release_60
-version_lld=release_60
-version_extra=release_60
-version_libunwind=release_60
-
 if [ ! -d $prefix ]; then
     if ! mkdir -p $prefix; then
         echo failed to create directory $prefix
@@ -67,28 +58,14 @@ export REQUIRES_RTTI=1
 export PATH=$prefix/bin:$PATH
 
 src="$prefix/src/llvm"
-src_libcxxabi=${src}/projects/libcxxabi
-src_libcxx=${src}/projects/libcxx
-src_compilerrt=${src}/projects/compiler-rt
-src_libunwind=${src}/projects/libunwind
-# src_lldb=${src}/tools/lldb
-src_lld=${src}/tools/lld
+
 libcxx_include=$prefix/include/c++/v1
-libcxx_lib=$prefix/lib
-
 mkdir -p $libcxx_include
-
-function st
-{
-    eval echo \$\{$1_stage${stage}\}
-}
 
 function apply_patch
 {
     patch=$1
     base=`basename $patch`
-
-    cwd=`pwd`
 
     cd $src
 
@@ -104,132 +81,143 @@ function apply_patch
     cat $patch | git am -3
 }
 
-#### Clone reposistories.
+d=`dirname $0`
+patches=`cd $d; pwd`/patches
 
 export GIT_COMMITTER_EMAIL="`whoami`@localhost"
 export GIT_COMMITTER_NAME="`whoami`"
 
-d=`dirname $0`
-patches=`cd $d; pwd`/patches
 
 if [ "${perform_clone}" == "1" ]; then
 
-    mkdir -p $src
+    mkdir -p `dirname $src`
     echo Changing directory to `dirname $src` for installing  ...
     cd `dirname $src`
 
-    if [[ ! -d `basename $src`/.git ]]; then
-        git clone ${git_base}/llvm.git `basename $src`
+    if [[ ! -d ${src}/tools/clang ]]; then
+        wget http://releases.llvm.org/${v}/llvm-${v}.src.tar.xz
+        tar xf llvm-${v}.src.tar.xz && mv llvm-${v}.src llvm
 
-        ( cd $src/tools && git clone ${git_base}/clang.git )
-        ( cd $src/projects && git clone ${git_base}/libcxx )
-        ( cd $src/projects && git clone ${git_base}/compiler-rt )
-        ( cd $src/projects && git clone ${git_base}/libunwind )
+        wget http://releases.llvm.org/${v}/cfe-${v}.src.tar.xz
+        tar xf cfe-${v}.src.tar.xz && mv cfe-${v}.src llvm/tools/clang
 
-        ( cd $src && git checkout -q ${version_llvm} )
-        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
-        ( cd ${src_libunwind} && git checkout -q ${version_libunwind} )
+        wget http://releases.llvm.org/${v}/libcxx-${v}.src.tar.xz
+        tar xf libcxx-${v}.src.tar.xz && mv libcxx-${v}.src llvm/projects/libcxx
 
-        ( cd $src/projects && git clone ${git_base}/libcxxabi )
-        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
+        wget http://releases.llvm.org/${v}/compiler-rt-${v}.src.tar.xz
+        tar xf compiler-rt-${v}.src.tar.xz && mv compiler-rt-${v}.src llvm/projects/compiler-rt
 
-        ( cd $src/tools/clang/tools && git clone ${git_base}/clang-tools-extra.git extra )
-        ( cd $src/tools/clang/tools/extra && git checkout -q ${version_extra} )
+        wget http://releases.llvm.org/${v}/libunwind-${v}.src.tar.xz
+        tar xf libunwind-${v}.src.tar.xz && mv libunwind-${v}.src llvm/projects/libunwind
 
-        ( cd `dirname ${src_lld}` && git clone ${git_base}/lld `basename ${src_lld}`)
-        ( cd ${src_lld} && git checkout -q ${version_lld}  )
+        wget http://releases.llvm.org/${v}/libcxxabi-${v}.src.tar.xz
+        tar xf libcxxabi-${v}.src.tar.xz && mv libcxxabi-${v}.src llvm/projects/libcxxabi
+
+        wget http://releases.llvm.org/${v}/clang-tools-extra-${v}.src.tar.xz
+        tar xf clang-tools-extra-${v}.src.tar.xz && mv clang-tools-extra-${v}.src llvm/tools/clang/extra
+
+        wget http://releases.llvm.org/${v}/lld-${v}.src.tar.xz
+        tar xf lld-${v}.src.tar.xz && mv lld-${v}.src llvm/tools/lld
     fi
 
-    # Cherry pick additional commits from master.
-    echo "${cherrypick}" | awk -v RS=\; '{print}' | while read line; do
-        if [ "$line" != "" ]; then
-            repo=`echo $line | cut -d ' ' -f 1`
-            commits=`echo $line | cut -d ' ' -f 2-`
-            echo "Cherry-picking $commits in $repo"
-            ( cd ${src}/$repo \
-              && git cherry-pick --strategy=recursive -X theirs $commits )
-        fi
-    done
+    if [[ ! -d $src/tools/clang/.git ]]; then
+        ( cd $src/tools/clang; \
+          git init; \
+          git add .; \
+          git commit -m 'clang src' )
+    fi
 
     # Apply any patches we might need.
     for i in $patches/*; do
         apply_patch $i
     done
 
-    echo === Done applying patches
+    echo Done applying patches
 fi
 
-CMAKE_common="-DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_LINK_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON -DLLVM_ENABLE_RTTI=on -DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64"
-CMAKE_common="${CMAKE_common} -DLLDB_DISABLE_PYTHON=on -DLLVM_INCLUDE_DOCS=off -DLLVM_INCLUDE_TESTS=off -DLLVM_INCLUDE_EXAMPLES=off"
+CMAKE_common="-DLLVM_BUILD_LLVM_DYLIB=on"
+CMAKE_common="${CMAKE_common} -DLLVM_LINK_LLVM_DYLIB=on"
+CMAKE_common="${CMAKE_common} -DLLVM_ENABLE_EH=on"
+CMAKE_common="${CMAKE_common} -DLLVM_ENABLE_RTTI=on"
+CMAKE_common="${CMAKE_common} -DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64"
+CMAKE_common="${CMAKE_common} -DLLDB_DISABLE_PYTHON=on"
+CMAKE_common="${CMAKE_common} -DLLVM_INCLUDE_DOCS=off"
+CMAKE_common="${CMAKE_common} -DLLVM_INCLUDE_TESTS=off"
+CMAKE_common="${CMAKE_common} -DLLVM_INCLUDE_EXAMPLES=off"
 
-CMAKE_stage0="${CMAKE_common} -DLLVM_TOOL_LLD_BUILD=on -DLLVM_TOOL_LLDB_BUILD=off"
-#CMAKE_stage0="${CMAKE_stage0} \"-DCMAKE_EXE_LINKER_FLAGS=-ldl -lz\" \"-DCMAKE_SHARED_LINKER_FLAGS=-ldl -lz\""
+CMAKE_stage0="${CMAKE_common} -DLLVM_TOOL_LLD_BUILD=on"
+CMAKE_stage0="${CMAKE_stage0} -DLLVM_TOOL_LLDB_BUILD=off"
 
-CMAKE_libcpp="-DLLVM_TOOL_LIBCXX_BUILD=on -DLLVM_TOOL_LIBCXXABI_BUILD=on -DLLVM_TOOL_COMPILER_RT_BUILD=on"
-CMAKE_libcpp="${CMAKE_libcpp} -DLIBCXX_USE_COMPILER_RT=on -DLIBCXXABI_USE_COMPILER_RT=on -DLIBCXXABI_USE_LLVM_UNWINDER=on"
+echo Building LLVM/clang, stage 0 ...
 
-CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=${assertions} ${CMAKE_libcpp}"
-CMAKE_stage1="$PCMAKE_stage1} -DGCC_INSTALL_PREFIX=${sysroot}/usr -DCMAKE_SYSROOT=${sysroot}"
-CMAKE_stage1="${CMAKE_stage1} -DLLVM_TOOL_LLD_BUILD=on -DLLVM_TOOL_LLDB_BUILD=off -DLLVM_ENABLE_LLD=on"
+( cd $src && \
+  mkdir -p build-stage0 && \
+  cd build-stage0 && \
+  CC="$CC" \
+  CXX="$CXX" \
+  CFLAGS="-Os -s" \
+  CXXFLAGS="-Os -s" \
+  LDFLAGS="${addl_ldflags}" \
+  cmake -DCMAKE_BUILD_TYPE=${buildtype} \
+        -DLLVM_REQUIRES_RTTI=1 \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        ${addl_cmake} \
+        ${CMAKE_stage0} \
+        .. && \
+  make -j $parallelism VERBOSE=1 V=1 && \
+  make install \
+)
 
-#### Configure the stages.
+echo Building LLVM/clang, stage 1 ...
 
-# Stage 0 options. Get us a clang.
+CMAKE_libcpp="-DLIBCXX_USE_COMPILER_RT=on"
+CMAKE_libcpp="${CMAKE_libcpp} -DLIBCXXABI_USE_COMPILER_RT=on"
+CMAKE_libcpp="${CMAKE_libcpp} -DLIBCXXABI_USE_LLVM_UNWINDER=on"
+CMAKE_libcpp="${CMAKE_libcpp} -DLLVM_BUILD_EXTERNAL_COMPILER_RT=on"
 
-CC_stage0="$CC"
-CXX_stage0="$CXX"
-CFLAGS_stage0="-Os -s"
-CXXFLAGS_stage0="-Os -s"
-LDFLAGS_stage0="${addl_ldflags}"
-BUILD_TYPE_stage0=${buildtype}
+CMAKE_stage1="${CMAKE_common} ${CMAKE_libcpp}"
+CMAKE_stage1="${CMAKE_stage1} -DGCC_INSTALL_PREFIX=${sysroot}/usr"
+CMAKE_stage1="${CMAKE_stage1} -DCMAKE_SYSROOT=${sysroot}"
+CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_LLD=on"
+#CMAKE_stage1="${CMAKE_stage1} -DCMAKE_C_FLAGS=--gcc-toolchain=${toolchain}"
 
-# Stage 1 options. Compile against standard libraries.
+#( cd $src && \
+#  mkdir -p build-stage1/compiler-rt && \
+#  cd build-stage1/compiler-rt && \
+#  CC=$prefix/bin/clang \
+#  CXX=$prefix/bin/clang++ \
+#  CFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
+#  CXXFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
+#  LDFLAGS="${addl_ldflags} -lunwind -rtlib=compiler-rt -fuse-ld=lld" \
+#  cmake -DCMAKE_BUILD_TYPE=${buildtype} \
+#        -DLLVM_REQUIRES_RTTI=1 \
+#        -DCMAKE_INSTALL_PREFIX=${prefix} \
+#        ${addl_cmake} \
+#        ${CMAKE_stage1} \
+#        ../../projects/compiler-rt && \
+#  make -j $parallelism VERBOSE=1 V=1 && \
+#  make install \
+#)
 
-CC_stage1=$prefix/bin/clang
-CXX_stage1=$prefix/bin/clang++
-
-CFLAGS_stage1="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}"
-CXXFLAGS_stage1="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}"
-LDFLAGS_stage1="${addl_ldflags} -rtlib=compiler-rt -fuse-ld=lld"
-BUILD_TYPE_stage1=${buildtype}
-
-#### Compile the stages.
-
-echo Changing directory to $src ...
-cd $src
-
-for stage in 0 1; do
-     echo ===
-     echo === Building LLVM/clang, stage ${stage} ...
-     echo ===
-
-     ( cd $src && \
-       mkdir -p build-stage${stage} && \
-       cd build-stage${stage} && \
-       CC=`st CC` \
-       CXX=`st CXX` \
-       CFLAGS="`st CFLAGS`" \
-       CXXFLAGS="`st CXXFLAGS`" \
-       LDFLAGS="`st LDFLAGS`" \
-       cmake -DCMAKE_BUILD_TYPE=`st BUILD_TYPE` \
-             -DLLVM_REQUIRES_RTTI=1 \
-             -DCMAKE_INSTALL_PREFIX=${prefix} \
-             ${addl_cmake} \
-             `st CMAKE` \
-             .. && \
-       make -j $parallelism VERBOSE=1 V=1 && \
-       make install \
-     )
-
-    if [ "$?" != "0" ] ; then
-        echo ===
-        echo === Failed building LLVM/clang at stage ${stage}
-        echo ===
-        exit 1
-    fi
-done
+( cd $src && \
+  mkdir -p build-stage1/projects && \
+  cd build-stage1/projects && \
+  CC=$prefix/bin/clang \
+  CXX=$prefix/bin/clang++ \
+  CFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
+  CXXFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
+  LDFLAGS="${addl_ldflags} -lunwind -rtlib=compiler-rt -fuse-ld=lld" \
+  cmake -DCMAKE_BUILD_TYPE=${buildtype} \
+        -DLLVM_REQUIRES_RTTI=1 \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        ${addl_cmake} \
+        ${CMAKE_stage1} \
+        ../.. && \
+  cd projects && \
+  make -j $parallelism VERBOSE=1 V=1 && \
+  make install \
+)
 
 echo Deleting $src ...
 rm -rf "${src}"
+rm -rf "${src}/../*"

@@ -46,10 +46,12 @@ if [[ ! -d $DIR/zlib-1.2.11 ]]; then
     tar xzf zlib-1.2.11.tar.gz )
 fi
 
-( cd $DIR/zlib-1.2.11; \
-  ./configure --prefix $PREFIX;
-  make; \
-  make install )
+if [[ ! -e $PREFIX/lib/libz.a ]]; then
+  ( cd $DIR/zlib-1.2.11; \
+    ./configure --prefix $PREFIX;
+    make; \
+    make install )
+fi
 
 # Build a new libxml and install (static only) into the sysroot.
 if [[ ! -d $DIR/libxml2-2.9.7 ]]; then
@@ -58,10 +60,12 @@ if [[ ! -d $DIR/libxml2-2.9.7 ]]; then
     tar xzf libxml2-2.9.7.tar.gz )
 fi
 
-( cd $DIR/libxml2-2.9.7; \
-  ./configure --with-pic --prefix $PREFIX --enable-static --without-lzma --without-python; \
-  make; \
-  make install )
+if [[ ! -e $PREFIX/lib/libxml2.a ]]; then
+  ( cd $DIR/libxml2-2.9.7; \
+    ./configure --with-pic --prefix $PREFIX --enable-static --without-lzma --without-python; \
+    make; \
+    make install )
+fi
 
 # Fix some libxml symlinks.
 if [[ ! -e $PREFIX/include/libxml ]]; then
@@ -73,7 +77,8 @@ export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
 
 # Build LLVM twice.
 unset OPT
-if [[ -e $DIR/src/llvm ]]; then
+if [[ -e $PREFIX/src/llvm ]]; then
+  rm -rf $PREFIX/src/llvm/build*
   OPT=-c
 fi
 
@@ -86,3 +91,4 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
   ls | grep -e "libLLVM.*a" | xargs rm )
 
 echo "Complete"
+
