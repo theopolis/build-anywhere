@@ -62,32 +62,6 @@ src="$prefix/src/llvm"
 libcxx_include=$prefix/include/c++/v1
 mkdir -p $libcxx_include
 
-function apply_patch
-{
-    patch=$1
-    base=`basename $patch`
-
-    cd $src
-
-    if basename "$patch" | grep -q -- '--'; then
-        dir=`echo $base | awk -v src=$src -F '--' '{printf("%s/%s/%s", src, $1, $2);}'`
-        if [ ! -d "$dir" ]; then
-            return
-        fi
-
-        cd $dir
-    fi
-
-    cat $patch | git am -3
-}
-
-d=`dirname $0`
-patches=`cd $d; pwd`/patches
-
-export GIT_COMMITTER_EMAIL="`whoami`@localhost"
-export GIT_COMMITTER_NAME="`whoami`"
-
-
 if [ "${perform_clone}" == "1" ]; then
 
     mkdir -p `dirname $src`
@@ -119,20 +93,6 @@ if [ "${perform_clone}" == "1" ]; then
         wget http://releases.llvm.org/${v}/lld-${v}.src.tar.xz
         tar xf lld-${v}.src.tar.xz && mv lld-${v}.src llvm/tools/lld
     fi
-
-    if [[ ! -d $src/tools/clang/.git ]]; then
-        ( cd $src/tools/clang; \
-          git init; \
-          git add .; \
-          git commit -m 'clang src' )
-    fi
-
-    # Apply any patches we might need.
-    for i in $patches/*; do
-        apply_patch $i
-    done
-
-    echo Done applying patches
 fi
 
 CMAKE_common="-DLLVM_BUILD_LLVM_DYLIB=on"
@@ -179,25 +139,6 @@ CMAKE_stage1="${CMAKE_common} ${CMAKE_libcpp}"
 CMAKE_stage1="${CMAKE_stage1} -DGCC_INSTALL_PREFIX=${sysroot}/usr"
 CMAKE_stage1="${CMAKE_stage1} -DCMAKE_SYSROOT=${sysroot}"
 CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_LLD=on"
-#CMAKE_stage1="${CMAKE_stage1} -DCMAKE_C_FLAGS=--gcc-toolchain=${toolchain}"
-
-#( cd $src && \
-#  mkdir -p build-stage1/compiler-rt && \
-#  cd build-stage1/compiler-rt && \
-#  CC=$prefix/bin/clang \
-#  CXX=$prefix/bin/clang++ \
-#  CFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
-#  CXXFLAGS="-Os --sysroot=${sysroot} --gcc-toolchain=${toolchain}" \
-#  LDFLAGS="${addl_ldflags} -lunwind -rtlib=compiler-rt -fuse-ld=lld" \
-#  cmake -DCMAKE_BUILD_TYPE=${buildtype} \
-#        -DLLVM_REQUIRES_RTTI=1 \
-#        -DCMAKE_INSTALL_PREFIX=${prefix} \
-#        ${addl_cmake} \
-#        ${CMAKE_stage1} \
-#        ../../projects/compiler-rt && \
-#  make -j $parallelism VERBOSE=1 V=1 && \
-#  make install \
-#)
 
 ( cd $src && \
   mkdir -p build-stage1/projects && \
