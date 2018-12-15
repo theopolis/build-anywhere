@@ -47,7 +47,7 @@ You can also download a `x86_64-anywhere-linux-gnu.tar.gz` if someone is kind en
 Sourcing the `anywhere-setup.sh` script should set up your environment.
 
 ```
-. /x86_64-anywhere-linux-gnu/anywhere-setup.sh
+. x86_64-anywhere-linux-gnu/scripts/anywhere-setup.sh
 ```
 
 Important variables:
@@ -66,5 +66,5 @@ CC=clang --sysroot=$SYSROOT --gcc-toolchain=x86_64-anywhere-linux-gnu
 Source the `anywhere-setup-security.sh` script adds extra linker and compiler flags.
 
 ```
-. x86_64-anywhere-linux-gnu/anywhere-setup=security.sh
+. x86_64-anywhere-linux-gnu/scripts/anywhere-setup-security.sh
 ```
