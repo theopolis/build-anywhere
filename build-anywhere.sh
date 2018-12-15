@@ -90,5 +90,7 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
   ls | grep -e "liblld.*a" | xargs rm; \
   ls | grep -e "libLLVM.*a" | xargs rm )
 
+cp $SCRIPT_DIR/scripts/*sh $DIR/$TUPLE
+
 echo "Complete"
 
