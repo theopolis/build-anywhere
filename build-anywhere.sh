@@ -35,6 +35,8 @@ if [[ ! -e $PREFIX/bin/gcc ]]; then
   # Create symlinks in the new sysroot to GCC.
   ( cd $PREFIX/bin; \
     for file in ../../../../bin/*; do ln -s $file ${file/*${TUPLE}-/} || true; done )
+  ( cd $PREFIX/lib; \
+    for file in ../../lib/libstdc*; do ln -s $file $(basename $file) || true; done )
 fi
 
 export PATH=$PREFIX/bin:$PATH
