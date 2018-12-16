@@ -1,9 +1,14 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-SCRIPT=$(readlink -f "$0")
+if [[ "x$BASH_SOURCE" = x"" ]]
+        then BASH_SOURCE=$0
+fi
+
+SCRIPT=$(readlink -f "$BASH_SOURCE")
 SCRIPTPATH=$(dirname "$SCRIPT")
+INSTALLPATH=$(dirname "$SCRIPTPATH")
 
-SYSROOT=$SCRIPTPATH/x86_64-anywhere-linux-gnu/sysroot
+SYSROOT=$INSTALLPATH/x86_64-anywhere-linux-gnu/sysroot
 PREFIX=$SYSROOT/usr
 
 NEW_PATH=$PREFIX/bin:$SYSROOT/sbin
@@ -14,12 +19,13 @@ esac
 
 export PATH=$PATH
 export PREFIX=$PREFIX
-export CC="clang --gcc-toolchain=$SCRIPTPATH --sysroot=$SYSROOT"
-export CXX="clang++ --gcc-toolchain=$SCRIPTPATH --sysroot=$SYSROOT"
-export CONFIG_SITE=$SCRIPTPATH/config.site
+export CC="clang --gcc-toolchain=$INSTALLPATH --sysroot=$SYSROOT"
+export CXX="clang++ --gcc-toolchain=$INSTALLPATH --sysroot=$SYSROOT"
+export CONFIG_SITE=$INSTALLPATH/config.site
 export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+export LIBRARY_PATH=$PREFIX/lib
 export LDFLAGS="-static-libgcc -static-libstdc++ $1"
-export CFLAGS="-DNDEBUG -march=x86-64 $2"
+export CFLAGS="--gcc-toolchain=$INSTALLPATH --sysroot=$SYSROOT -march=x86-64 $2"
 export CXXFLAGS="$CFLAGS"
 
-echo "prefix=$PREFIX" > $SCRIPTPATH/config.site
+echo "prefix=$PREFIX" > $INSTALLPATH/config.site

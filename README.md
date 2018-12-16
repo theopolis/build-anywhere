@@ -6,9 +6,13 @@ These scripts build a toolchain/runtime that runs on almost every Linux distribu
 
 At a very high level:
 
-- Use Crosstool-NG to build a new GCC linked against a 2.13 glibc.
-- Build an older zlib to link against.
-- Build a new Clang/LLVM with the new GCC also linked against a 2.13 glibc.
+- Use Crosstool-NG to build **gcc 8.2.0** linked against a **glibc 2.13**.
+- Build an older **zlib 1.2.11** to link against.
+- Build **Clang/LLVM 7.0.0** with the new GCC also linked against a **glibc 2.13**.
+- You can use the clang/gcc compiler anywhere.
+- You can use either clang or gcc's compiler runtime, recommend using linking flags to link these statically.
+- You can use either libstdc++ or libc++, recommended linking these statically.
+- You can use all of the LLVM static analysis and sanitizer frameworks.
 
 ## man build-anywhere.sh
 
@@ -68,3 +72,30 @@ Source the `anywhere-setup-security.sh` script adds extra linker and compiler fl
 ```
 . x86_64-anywhere-linux-gnu/scripts/anywhere-setup-security.sh
 ```
+
+## Accuracy
+
+This is a best-effort solution that covers most bases. Every project's build system is different and may not respect the variable this toolchain sets. Most problems can be resolved by telling the autotools, cmake, etc system about the explicit linking and include paths.
+
+As an example SleuthKit will still find the system `libstdc++` and OpenSSL needs an explicit `--prefix=$PREFIX`.
+
+A more-accurate version forces the use of clang, clang's compiler runtime, and LLVM's `libc++`. This is more accurate because it is harder for build systems to work if they make weird assumptions, so you either break or work, which is better. The side effect of this is about 100kB additional code.
+
+Add to `LDFLAGS`
+
+```
+-fuse-ld=lld -rtlib=compiler-rt -l:libc++.a -l:libc++abi.a -l:libunwind.a -lpthread -ldl
+```
+
+Add to `CXXFLAGS`
+
+```
+-stdlib=libc++
+```
+
+You can also remove the libc dynamic libraries to force anything trying to link to link them statically.
+- `$PREFIX/lib/libc++*.so*`
+- `$PREFIX/lib/libunwind*.so*`
+
+Now build systems have no choice.
+

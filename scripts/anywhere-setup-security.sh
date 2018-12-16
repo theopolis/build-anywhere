@@ -1,10 +1,15 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-SCRIPT=$(readlink -f "$0")
+if [[ ! "x$0" = "x-bash" ]]
+        then BASH_SOURCE=$0
+fi
+
+SCRIPT=$(readlink -f "$BASH_SOURCE")
 SCRIPTPATH=$(dirname "$SCRIPT")
+INSTALLPATH=$(dirname "$SCRIPTPATH")
 
-EXTRA_CFLAGS="-fPIC -fPIE -pie -fstack-protector-all -fsanitize=safe-stack"
+EXTRA_CFLAGS="-fPIC -fPIE -fstack-protector-all -fsanitize=safe-stack"
 EXTRA_LDFLAGS="-Wl,-z,relro -Wl,-z,now"
+# -Wl,-pie
 
-. $SCRIPTPATH/setup.sh "$EXTRA_LDFLAGS" "$EXTRA_CFLAGS"
-
+. $SCRIPTPATH/anywhere-setup.sh "$EXTRA_LDFLAGS" "$EXTRA_CFLAGS"
