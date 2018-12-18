@@ -46,6 +46,8 @@ $ du -h --max-depth=2 /opt/build/x86_64-anywhere-linux-gnu
 
 You can also download a `x86_64-anywhere-linux-gnu.tar.gz` if someone is kind enough to host it. **Remember** you can build this once and run it from any directory on any x86_64 Linux created in 2011 or newer.
 
+**Initial release**: [x86_64-anywhere-linux-gnu.tar.gz](https://s3.amazonaws.com/build-anywhere/x86_64-anywhere-linux-gnu.tar.gz)
+
 ## Using the anywhere toolchain
 
 Sourcing the `./scripts/anywhere-setup.sh` script should set up your environment.
