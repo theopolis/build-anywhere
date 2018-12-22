@@ -14,6 +14,8 @@ At a very high level:
 - You can use either libstdc++ or libc++; recommended linking these statically.
 - You can use all of the LLVM static analysis and sanitizer frameworks.
 
+This project builds the runtime. You can download pre-built runtimes on the [Releases](https://github.com/theopolis/build-anywhere/releases) page.
+
 ## man build-anywhere.sh
 
 ```
