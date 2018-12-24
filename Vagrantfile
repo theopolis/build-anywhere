@@ -8,6 +8,9 @@ targets = {
   "centos7" => {
     "box" => "elastic/centos-7-x86_64"
   },
+  "centos6" => {
+    "box" => "bento/centos-6.7"
+  },
   "ubuntu14" => {
     "box" => "ubuntu/trusty64"
   },
@@ -37,11 +40,6 @@ Vagrant.configure("2") do |config|
     box = target["box"]
     config.vm.define name do |build|
       build.vm.box = box
-      build.vm.provision 'shell',
-        privileged: false,
-        inline:
-          "sudo apt-get update;"\
-          "sudo apt-get install -y git;"\
     end
   end
 end
