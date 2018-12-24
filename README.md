@@ -1,5 +1,7 @@
 # ./build-anywhere.sh /output/path
 
+[![Build Status](https://travis-ci.org/theopolis/build-anywhere.svg?branch=master)](https://travis-ci.org/theopolis/build-anywhere)
+
 These scripts build a toolchain/runtime that runs on almost every Linux distribution. The compilers can produce libraries and executables that also run on almost every Linux distribution.
 
 > anywhere (n). x86_64 Linux distributions that include a 2.13 (circa 2011+) or newer glibc.
