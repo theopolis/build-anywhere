@@ -92,8 +92,12 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
   ls | grep -e "liblld.*a" | xargs rm; \
   ls | grep -e "libLLVM.*a" | xargs rm )
 
+# Remove shared versions of libc++ and libunwind.
+( cd $PREFIX/lib; \
+  rm libc++*.so*; \
+  rm libunwind*.so* )
+
 # Install our helper / debugging scripts.
 cp -R $SCRIPT_DIR/overlay/* $DIR/$TUPLE
 
 echo "Complete"
-
