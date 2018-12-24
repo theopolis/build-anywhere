@@ -9,6 +9,9 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 INSTALLPATH=$(dirname "$SCRIPTPATH")
 
 EXTRA_CFLAGS="-fPIC -fPIE -fstack-protector-all -fsanitize=safe-stack"
-EXTRA_LDFLAGS="-Wl,-z,relro,-z,now -pie"
+# -O3 -flto
+
+EXTRA_LDFLAGS="-fuse-ld=lld -Wl,-z,relro,-z,now -pie"
+# -flto
 
 . $SCRIPTPATH/anywhere-setup.sh "$EXTRA_LDFLAGS" "$EXTRA_CFLAGS"

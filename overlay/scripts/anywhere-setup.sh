@@ -24,8 +24,8 @@ export CXX="clang++ --gcc-toolchain=$INSTALLPATH --sysroot=$SYSROOT"
 export CONFIG_SITE=$INSTALLPATH/config.site
 export PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
 export LIBRARY_PATH=$PREFIX/lib
-export LDFLAGS="-static-libgcc -static-libstdc++ $1"
+export LDFLAGS="-static-libgcc -static-libstdc++ $1 -l:libc++.a -l:libc++abi.a -l:libunwind.a"
 export CFLAGS="--gcc-toolchain=$INSTALLPATH --sysroot=$SYSROOT -march=x86-64 $2"
-export CXXFLAGS="$CFLAGS"
+export CXXFLAGS="$CFLAGS -stdlib=libc++"
 
 echo "prefix=$PREFIX" > $INSTALLPATH/config.site
