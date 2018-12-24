@@ -9,6 +9,14 @@ PREFIX=$SYSROOT/usr
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
+ZLIB_VER="1.2.11"
+ZLIB_URL="https://zlib.net/zlib-${ZLIB_VER}.tar.gz"
+ZLIB_SHA="c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+
+LIBXML2_VER="2.9.7"
+LIBXML2_URL="http://xmlsoft.org/sources/libxml2-${LIBXML2_VER}.tar.gz"
+LIBXML2_SHA="f63c5e7d30362ed28b38bfa1ac6313f9a80230720b7fb6c80575eeab3ff5900c"
+
 mkdir -p $DIR
 
 # Clone and build CrosstoolNG.
@@ -42,28 +50,30 @@ fi
 export PATH=$PREFIX/bin:$PATH
 
 # Build a legacy zlib and install into the sysroot.
-if [[ ! -d $DIR/zlib-1.2.11 ]]; then
-  cp $SCRIPT_DIR/zlib-1.2.11.tar.gz $DIR
+if [[ ! -d $DIR/zlib-${ZLIB_VER} ]]; then
   ( cd $DIR; \
-    tar xzf zlib-1.2.11.tar.gz )
+    wget $ZLIB_URL; \
+    echo "${ZLIB_SHA} zlib-${ZLIB_VER}.tar.gz" | sha256sum -c; \
+    tar xzf zlib-${ZLIB_VER}.tar.gz )
 fi
 
 if [[ ! -e $PREFIX/lib/libz.a ]]; then
-  ( cd $DIR/zlib-1.2.11; \
+  ( cd $DIR/zlib-${ZLIB_VER}; \
     ./configure --prefix $PREFIX;
     make; \
     make install )
 fi
 
 # Build a new libxml and install (static only) into the sysroot.
-if [[ ! -d $DIR/libxml2-2.9.7 ]]; then
-  cp $SCRIPT_DIR/libxml2-2.9.7.tar.gz $DIR
+if [[ ! -d $DIR/libxml2-${LIBXML2_VER} ]]; then
   ( cd $DIR; \
-    tar xzf libxml2-2.9.7.tar.gz )
+    wget $LIBXML2_URL; \
+    echo "${LIBXML2_SHA} libxml2-${LIBXML2_VER}.tar.gz" | sha256sum -c; \
+    tar xzf libxml2-${LIBXML2_VER}.tar.gz )
 fi
 
 if [[ ! -e $PREFIX/lib/libxml2.a ]]; then
-  ( cd $DIR/libxml2-2.9.7; \
+  ( cd $DIR/libxml2-${LIBXML2_VER}; \
     ./configure --with-pic --prefix $PREFIX --enable-static --without-lzma --without-python; \
     make; \
     make install )
