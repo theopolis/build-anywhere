@@ -74,7 +74,7 @@ fi
 
 if [[ ! -e $PREFIX/lib/libxml2.a ]]; then
   ( cd $DIR/libxml2-${LIBXML2_VER}; \
-    ./configure --with-pic --prefix $PREFIX --enable-static --without-lzma --without-python; \
+    ./configure --with-pic --prefix $PREFIX --enable-static --disable-shared --without-lzma --without-python; \
     make; \
     make install )
 fi
