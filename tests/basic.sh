@@ -18,6 +18,9 @@ function setup {
   wget $BUNDLE_URL
   tar xf $BUNDLE
   cp -R $SCRIPTPATH/../overlay x86_64-anywhere-linux-gnu/
+
+  # make install here
+  export PREFIX=x86_64-anywhere-linux-gnu/usr
 }
 
 function build_openssl {
@@ -51,7 +54,7 @@ function build_ssdeep {
   wget $SSDEEP_URL
   tar xf ssdeep-${SSDEEP_VER}.tar.gz
   (cd $DIR; \
-    ./configure --disable-shared; \
+    ./configure --prefix=$PREFIX --disable-shared; \
     make -j$(nproc); \
     make install)
 
