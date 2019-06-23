@@ -26,3 +26,7 @@ export LDFLAGS="-static-libgcc -static-libstdc++ $1 -fuse-ld=lld -Wl,-z,relro,-z
 export CPPFLAGS="--gcc-toolchain=${INSTALLPATH} --sysroot=${SYSROOT}"
 export CFLAGS="${CPPFLAGS} -march=x86-64 -fPIC -Oz $2"
 export CXXFLAGS="${CFLAGS} -stdlib=libc++"
+
+export PREFIX="${PREFIX}"
+export CONFIG_SITE="${INSTALLPATH}/config.site"
+echo "prefix=${PREFIX}" > "{$INSTALLPATH}/config.site"
