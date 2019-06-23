@@ -111,3 +111,4 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
 cp -R $SCRIPT_DIR/overlay/* $DIR/$TUPLE
 
 echo "Complete"
+echo "Run: tar -C $DIR cJf $TUPLE-vXYZ.tar.xz $TUPLE"
