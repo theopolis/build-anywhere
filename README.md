@@ -10,7 +10,7 @@ At a very high level:
 
 - Use Crosstool-NG to build **gcc 8.2.0** linked against a **glibc 2.13**.
 - Build an older **zlib 1.2.11** to link against.
-- Build **Clang/LLVM 7.0.0** with the new GCC also linked against a **glibc 2.13**.
+- Build **Clang/LLVM 8.0.0** with the new GCC also linked against a **glibc 2.13**.
 - You can use the clang/gcc compiler anywhere.
 - You can use either clang or gcc's compiler runtime; recommend using linking flags to link these statically.
 - You can use either libstdc++ or libc++; recommended linking these statically.
@@ -27,7 +27,7 @@ $ ./build-anywhere.sh /opt/build
 This will create several output files/directories in `/opt/build`, at the end the important one is `x86_64-anywhere-linux-gnu`.
 
 ```
-$ du -h --max-depth=2 /opt/build/x86_64-anywhere-linux-gnu 
+$ du -h --max-depth=2 /opt/build/x86_64-anywhere-linux-gnu
 44M   /opt/build/x86_64-anywhere-linux-gnu/bin
 4.0K  /opt/build/x86_64-anywhere-linux-gnu/include
 54M   /opt/build/x86_64-anywhere-linux-gnu/libexec/gcc
@@ -62,11 +62,17 @@ Important variables:
 
 ```
 SYSROOT=x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/sysroot
-PREFIX=$SYSROOT/usr
 PATH=$PREFIX/bin:$PATH
-PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
 CXX=clang++ --sysroot=$SYSROOT --gcc-toolchain=x86_64-anywhere-linux-gnu
 CC=clang --sysroot=$SYSROOT --gcc-toolchain=x86_64-anywhere-linux-gnu
+```
+
+There are several optional variables you may want to include. If you intend to install into the build-anywhere toolchain, also set the following:
+
+```
+PREFIX=$SYSROOT/usr
+PKG_CONFIG_PATH=$PREFIX/lib/pkgconfig
+ACLOCAL_PATH=$PREFIX/share/aclocal
 ```
 
 ## (Somewhat) security-enhanced toolchain
@@ -79,27 +85,26 @@ Source the `./scripts/anywhere-setup-security.sh` script adds extra linker and c
 
 ## Accuracy
 
+There are some excessive linking options included.
+
+```
+-fuse-ld=lld -Wl,-z,relro,-z,now -pie -l:libc++.a -l:libc++abi.a -l:libunwind.a -lpthread -ldl -lrt -lz -lm
+```
+
+And the compiler flags attempt to make small binaries, with PIC, and without newer ASM.
+
+```
+-march=x86-64 -fPIC -Oz
+```
+
 This is a best-effort solution that covers most bases. Every project's build system is different and may not respect the variable this toolchain sets. Most problems can be resolved by telling autotools, cmake, etc, system about the explicit linking and include paths.
 
 As an example, SleuthKit will still find the system `libstdc++.so` and OpenSSL needs an explicit `--prefix=$PREFIX`.
 
 A more-accurate version forces the use of clang, clang's compiler runtime, and LLVM's `libc++`. This is more accurate because it is harder for build systems to work if they make assumptions (e.g., we did not read their documentation closely). So you either break it or it works, which is better. The side effect of this is about 100kB additional code from static linking compared to gcc's runtime and c++ implementation.
 
-Add to `LDFLAGS`
-
-```
--fuse-ld=lld -rtlib=compiler-rt -l:libc++.a -l:libc++abi.a -l:libunwind.a -lpthread -ldl
-```
-
-Add to `CXXFLAGS`
-
-```
--stdlib=libc++
-```
-
 You can also remove the libc dynamic libraries to force anything trying to link them statically.
 - `$PREFIX/lib/libc++*.so*`
 - `$PREFIX/lib/libunwind*.so*`
 
 Now build systems have no choice.
-
