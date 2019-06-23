@@ -14,7 +14,7 @@ parallelism=1
 targets=host
 toolchain=none
 sysroot=none
-v=7.0.0
+v=8.0.0
 
 while getopts "j:t:s:c" opt ; do
     case "$opt" in
