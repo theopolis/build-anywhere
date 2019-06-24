@@ -18,11 +18,11 @@ case ":${PATH:=$NEW_PATH}:" in
 esac
 
 export PATH="${PATH}"
-export CC="clang --gcc-toolchain=${INSTALLPATH} --sysroot=${SYSROOT}"
-export CXX="clang++ --gcc-toolchain=${INSTALLPATH} --sysroot=${SYSROOT}"
+export CC="clang"
+export CXX="clang++"
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
 export LIBRARY_PATH="${PREFIX}/lib"
-export LDFLAGS="-static-libgcc -static-libstdc++ $1 -fuse-ld=lld -Wl,-z,relro,-z,now -pie -l:libc++.a -l:libc++abi.a -l:libunwind.a -lpthread -ldl -lrt -lz -lm"
+export LDFLAGS="-static-libgcc $1 -fuse-ld=lld -Wl,-z,relro,-z,now -pie -l:libc++.a -l:libc++abi.a -l:libunwind.a -lpthread -ldl -lrt -lz -lm"
 export CPPFLAGS="--gcc-toolchain=${INSTALLPATH} --sysroot=${SYSROOT}"
 export CFLAGS="${CPPFLAGS} -march=x86-64 -fPIC -Oz $2"
 export CXXFLAGS="${CFLAGS} -stdlib=libc++"
