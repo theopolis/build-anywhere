@@ -20,6 +20,8 @@ This project builds the runtime. You can download pre-built runtimes on the [Rel
 
 ## man build-anywhere.sh
 
+### build-from-source
+
 ```
 $ ./build-anywhere.sh /opt/build
 ```
@@ -48,14 +50,20 @@ $ du -h --max-depth=2 /opt/build/x86_64-anywhere-linux-gnu
 831M  /opt/build/x86_64-anywhere-linux-gnu
 ```
 
-You can also download a `x86_64-anywhere-linux-gnu.tar.gz` if someone is kind enough to host it. **Remember** you can build this once and run it from any directory on any x86_64 Linux created in 2011 or newer.
+**Remember** you can build this once and run it from any directory on any x86_64 Linux created in 2011 or newer.
+
+### download-prebuilt
+
+You can also download a prebuilt version, [`x86_64-anywhere-linux-gnu-VERSION.tar.gz`](https://github.com/theopolis/build-anywhere/releases), from the GitHub releases page.
+
+You can untar this and run from any directory. See below for guidance on how to use the toolchain.
 
 ## Using the anywhere toolchain
 
 Sourcing the `./scripts/anywhere-setup.sh` script should set up your environment.
 
 ```
-. ./x86_64-anywhere-linux-gnu/scripts/anywhere-setup.sh
+source ./x86_64-anywhere-linux-gnu/scripts/anywhere-setup.sh
 ```
 
 Important variables:
@@ -63,8 +71,8 @@ Important variables:
 ```
 SYSROOT=x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/sysroot
 PATH=$PREFIX/bin:$PATH
-CXX=clang++ --sysroot=$SYSROOT --gcc-toolchain=x86_64-anywhere-linux-gnu
-CC=clang --sysroot=$SYSROOT --gcc-toolchain=x86_64-anywhere-linux-gnu
+CXX=clang++
+CC=clang
 ```
 
 There are several optional variables you may want to include. If you intend to install into the build-anywhere toolchain, also set the following:
@@ -80,7 +88,7 @@ ACLOCAL_PATH=$PREFIX/share/aclocal
 Source the `./scripts/anywhere-setup-security.sh` script adds extra linker and compiler flags.
 
 ```
-. ./x86_64-anywhere-linux-gnu/scripts/anywhere-setup-security.sh
+source ./x86_64-anywhere-linux-gnu/scripts/anywhere-setup-security.sh
 ```
 
 ## Accuracy
