@@ -17,6 +17,10 @@ LIBXML2_VER="2.9.7"
 LIBXML2_URL="http://xmlsoft.org/sources/libxml2-${LIBXML2_VER}.tar.gz"
 LIBXML2_SHA="f63c5e7d30362ed28b38bfa1ac6313f9a80230720b7fb6c80575eeab3ff5900c"
 
+LINUX_HEADERS_VER="4.7"
+LINUX_HEADERS_URL="https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${LINUX_HEADERS_VER}.tar.xz"
+LINUX_HEADERS_SHA="5190c3d1209aeda04168145bf50569dc0984f80467159b1dc50ad731e3285f10"
+
 mkdir -p $DIR
 
 # Clone and build CrosstoolNG.
@@ -106,6 +110,19 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
 ( cd $PREFIX/lib; \
   rm libc++*.so*; \
   rm libunwind*.so* )
+
+# Install linux 4.7 headers into the sysroot.
+if [[ ! -d $DIR/linux-${LINUX_HEADERS_VER} ]]; then
+  ( cd $DIR; \
+    wget $LINUX_HEADERS_URL; \
+    echo "${LINUX_HEADERS_SHA} linux-${LINUX_HEADERS_VER}.tar.xz" | sha256sum -c; \
+    tar xf linux-${LINUX_HEADERS_VER}.tar.xz )
+fi
+
+if [[ ! -e $PREFIX/include/linux/bpf.h ]]; then
+  ( cd $DIR/linux-${LINUX_HEADERS_VER}; \
+    make headers_install INSTALL_HDR_PATH=$PREFIX )
+fi
 
 # Install our helper / debugging scripts.
 cp -R $SCRIPT_DIR/overlay/* $DIR/$TUPLE
