@@ -111,19 +111,6 @@ CC=gcc CXX=g++ $SCRIPT_DIR/install-clang.sh $OPT -j 6 -t $DIR/$TUPLE -s $SYSROOT
   rm libc++*.so*; \
   rm libunwind*.so* )
 
-# Install linux 4.7 headers into the sysroot.
-if [[ ! -d $DIR/linux-${LINUX_HEADERS_VER} ]]; then
-  ( cd $DIR; \
-    wget $LINUX_HEADERS_URL; \
-    echo "${LINUX_HEADERS_SHA} linux-${LINUX_HEADERS_VER}.tar.xz" | sha256sum -c; \
-    tar xf linux-${LINUX_HEADERS_VER}.tar.xz )
-fi
-
-if [[ ! -e $PREFIX/include/linux/bpf.h ]]; then
-  ( cd $DIR/linux-${LINUX_HEADERS_VER}; \
-    make headers_install INSTALL_HDR_PATH=$PREFIX )
-fi
-
 # Install our helper / debugging scripts.
 cp -R $SCRIPT_DIR/overlay/* $DIR/$TUPLE
 

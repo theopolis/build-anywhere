@@ -8,9 +8,10 @@ These scripts build a toolchain/runtime that runs on almost every Linux distribu
 
 At a very high level:
 
-- Use Crosstool-NG to build **gcc 8.2.0** linked against a **glibc 2.13**.
+- Use Crosstool-NG to build **gcc 8.3.0** linked against a **glibc 2.13**.
 - Build an older **zlib 1.2.11** to link against.
 - Build **Clang/LLVM 8.0.0** with the new GCC also linked against a **glibc 2.13**.
+- Kernel headers for **Linux 4.7** are included as they have certain bpf macros.
 - You can use the clang/gcc compiler anywhere.
 - You can use either clang or gcc's compiler runtime; recommend using linking flags to link these statically.
 - You can use either libstdc++ or libc++; recommended linking these statically.
@@ -30,24 +31,25 @@ This will create several output files/directories in `/opt/build`, at the end th
 
 ```
 $ du -h --max-depth=2 /opt/build/x86_64-anywhere-linux-gnu
-44M   /opt/build/x86_64-anywhere-linux-gnu/bin
-4.0K  /opt/build/x86_64-anywhere-linux-gnu/include
-54M   /opt/build/x86_64-anywhere-linux-gnu/libexec/gcc
-54M   /opt/build/x86_64-anywhere-linux-gnu/libexec
-4.0K  /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/bin
-11M   /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/include
-48K   /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/lib64
-710M  /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/sysroot
-4.0K  /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/lib
-4.0K  /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/debug-root
-720M  /opt/build/x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu
-1.5M  /opt/build/x86_64-anywhere-linux-gnu/lib/ldscripts
-9.8M  /opt/build/x86_64-anywhere-linux-gnu/lib/gcc
-12M   /opt/build/x86_64-anywhere-linux-gnu/lib
-120K  /opt/build/x86_64-anywhere-linux-gnu/share/gcc-8.2.0
-1.7M  /opt/build/x86_64-anywhere-linux-gnu/share/licenses
-1.8M  /opt/build/x86_64-anywhere-linux-gnu/share
-831M  /opt/build/x86_64-anywhere-linux-gnu
+44M   x86_64-anywhere-linux-gnu/bin
+4.0K  x86_64-anywhere-linux-gnu/include
+20K   x86_64-anywhere-linux-gnu/scripts
+54M   x86_64-anywhere-linux-gnu/libexec/gcc
+54M   x86_64-anywhere-linux-gnu/libexec
+4.0M  x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/bin
+11M   x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/include
+48K   x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/lib64
+708M  x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/sysroot
+4.0K  x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/lib
+4.0K  x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu/debug-root
+718M  x86_64-anywhere-linux-gnu/x86_64-anywhere-linux-gnu
+1.5M  x86_64-anywhere-linux-gnu/lib/ldscripts
+9.8M  x86_64-anywhere-linux-gnu/lib/gcc
+12M   x86_64-anywhere-linux-gnu/lib
+1.5M  x86_64-anywhere-linux-gnu/share/licenses
+120K  x86_64-anywhere-linux-gnu/share/gcc-8.3.0
+1.7M  x86_64-anywhere-linux-gnu/share
+829M  x86_64-anywhere-linux-gnu
 ```
 
 **Remember** you can build this once and run it from any directory on any x86_64 Linux created in 2011 or newer.
